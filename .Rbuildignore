@@ -1,0 +1,10 @@
+^xclim\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
+^\.github$
+^README\.Rmd$
+^codecov\.yml$
+^docs$
+^benchmarks$
+^tools$
+^cran-comments\.md$
