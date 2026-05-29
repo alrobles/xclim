@@ -2,38 +2,38 @@ Package: xclim
 Type: Package
 Title: Bioclimatic Variables from Monthly Climate Data
 Version: 0.1.0
-Authors@R: person("Angel Luis", "Robles Fernandez", 
+Authors@R: person("Angel Luis", "Robles Fernandez",
                    email = "a.l.robles.fernandez@gmail.com",
-                   role = c("aut", "cre"))
+                   role = c("aut", "cre"),
+                   comment = c(ORCID = "0000-0002-4835-2741"))
 Description: Computes the 19 standard bioclimatic variables (BIO01-BIO19) from
-    monthly climate data following the WorldClim specification. Provides both
-    individual variable functions and a unified interface to compute all 19
-    variables at once. Designed as an R implementation of the 'xbioclim' C++
-    library. Supports single-pixel vectors and block-based raster processing
-    via 'terra' for memory-efficient handling of large spatial datasets.
+    monthly climate data following the WorldClim specification
+    (Hijmans et al. 2005) <doi:10.1002/joc.1276>. Provides both individual
+    variable functions and a unified interface to compute all 19 variables at
+    once. Includes an ERA5-Land hourly-to-monthly aggregation pipeline for
+    converting raw reanalysis data to monthly variables (tas, tasmax, tasmin,
+    pr). Supports single-pixel vectors and block-based raster processing via
+    'terra' for memory-efficient handling of large spatial datasets. The C++
+    backend uses 'xtensor' for high-performance array operations with OpenMP
+    parallelism.
 License: MIT + file LICENSE
-Depends: R (>= 4.0.0)
-NeedsCompilation: yes
-SystemRequirements: GNU make, C++17;
-    optionally GDAL (>= 2.0.1) with gdal-config,
-    CUDA toolkit (>= 11.0) with nvcc for GPU acceleration
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
+Depends: R (>= 4.0.0)
 Imports:
     methods,
     Rcpp (>= 1.0.0)
 LinkingTo:
     Rcpp
 Suggests:
-    parallel,
-    sf,
-    terra (>= 1.7-29),
-    testthat (>= 3.1.5),
+    terra,
+    testthat (>= 3.0.0),
     knitr,
     rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+SystemRequirements: C++17
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
 URL: https://github.com/alrobles/xclim
 BugReports: https://github.com/alrobles/xclim/issues
 Collate:
@@ -44,8 +44,7 @@ Collate:
     'bioclim_module.R'
     'bioclimmodel.R'
     'bioclim_raster.R'
-    'bioclim_engine.R'
-    'engine.R'
-    'mask.R'
+    'era5_monthly.R'
+    'era5_bioclim.R'
     'messages.R'
     'xclim-package.R'

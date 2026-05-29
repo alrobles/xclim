@@ -10,96 +10,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// engine_create
-SEXP engine_create();
-RcppExport SEXP _xclim_engine_create() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(engine_create());
-    return rcpp_result_gen;
-END_RCPP
-}
-// engine_open
-void engine_open(SEXP xptr, Rcpp::CharacterVector tas_files, Rcpp::CharacterVector tasmax_files, Rcpp::CharacterVector tasmin_files, Rcpp::CharacterVector pr_files);
-RcppExport SEXP _xclim_engine_open(SEXP xptrSEXP, SEXP tas_filesSEXP, SEXP tasmax_filesSEXP, SEXP tasmin_filesSEXP, SEXP pr_filesSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type tas_files(tas_filesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type tasmax_files(tasmax_filesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type tasmin_files(tasmin_filesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type pr_files(pr_filesSEXP);
-    engine_open(xptr, tas_files, tasmax_files, tasmin_files, pr_files);
-    return R_NilValue;
-END_RCPP
-}
-// engine_set_output
-void engine_set_output(SEXP xptr, std::string path);
-RcppExport SEXP _xclim_engine_set_output(SEXP xptrSEXP, SEXP pathSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
-    Rcpp::traits::input_parameter< std::string >::type path(pathSEXP);
-    engine_set_output(xptr, path);
-    return R_NilValue;
-END_RCPP
-}
-// engine_set_mask
-void engine_set_mask(SEXP xptr, std::string mask_path);
-RcppExport SEXP _xclim_engine_set_mask(SEXP xptrSEXP, SEXP mask_pathSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
-    Rcpp::traits::input_parameter< std::string >::type mask_path(mask_pathSEXP);
-    engine_set_mask(xptr, mask_path);
-    return R_NilValue;
-END_RCPP
-}
-// engine_set_threads
-void engine_set_threads(SEXP xptr, int n);
-RcppExport SEXP _xclim_engine_set_threads(SEXP xptrSEXP, SEXP nSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    engine_set_threads(xptr, n);
-    return R_NilValue;
-END_RCPP
-}
-// engine_set_tile_size
-void engine_set_tile_size(SEXP xptr, int tile_size);
-RcppExport SEXP _xclim_engine_set_tile_size(SEXP xptrSEXP, SEXP tile_sizeSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
-    Rcpp::traits::input_parameter< int >::type tile_size(tile_sizeSEXP);
-    engine_set_tile_size(xptr, tile_size);
-    return R_NilValue;
-END_RCPP
-}
-// engine_set_variables
-void engine_set_variables(SEXP xptr, Rcpp::IntegerVector variables);
-RcppExport SEXP _xclim_engine_set_variables(SEXP xptrSEXP, SEXP variablesSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type variables(variablesSEXP);
-    engine_set_variables(xptr, variables);
-    return R_NilValue;
-END_RCPP
-}
-// engine_compute
-std::string engine_compute(SEXP xptr);
-RcppExport SEXP _xclim_engine_compute(SEXP xptrSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
-    rcpp_result_gen = Rcpp::wrap(engine_compute(xptr));
-    return rcpp_result_gen;
-END_RCPP
-}
 // bio01_cpp
 NumericVector bio01_cpp(NumericMatrix tas);
 RcppExport SEXP _xclim_bio01_cpp(SEXP tasSEXP) {
@@ -591,82 +501,44 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// cuda_device_count
-int cuda_device_count();
-RcppExport SEXP _xclim_cuda_device_count() {
+// era5_t2m_to_monthly_cpp
+List era5_t2m_to_monthly_cpp(NumericMatrix hourly, int n_days, bool to_celsius, int ncores);
+RcppExport SEXP _xclim_era5_t2m_to_monthly_cpp(SEXP hourlySEXP, SEXP n_daysSEXP, SEXP to_celsiusSEXP, SEXP ncoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(cuda_device_count());
+    Rcpp::traits::input_parameter< NumericMatrix >::type hourly(hourlySEXP);
+    Rcpp::traits::input_parameter< int >::type n_days(n_daysSEXP);
+    Rcpp::traits::input_parameter< bool >::type to_celsius(to_celsiusSEXP);
+    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
+    rcpp_result_gen = Rcpp::wrap(era5_t2m_to_monthly_cpp(hourly, n_days, to_celsius, ncores));
     return rcpp_result_gen;
 END_RCPP
 }
-// cuda_device_info
-Rcpp::List cuda_device_info();
-RcppExport SEXP _xclim_cuda_device_info() {
+// era5_tp_to_monthly_cpp
+NumericVector era5_tp_to_monthly_cpp(NumericMatrix hourly, int ncores);
+RcppExport SEXP _xclim_era5_tp_to_monthly_cpp(SEXP hourlySEXP, SEXP ncoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(cuda_device_info());
+    Rcpp::traits::input_parameter< NumericMatrix >::type hourly(hourlySEXP);
+    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
+    rcpp_result_gen = Rcpp::wrap(era5_tp_to_monthly_cpp(hourly, ncores));
     return rcpp_result_gen;
 END_RCPP
 }
-// engine_set_device
-void engine_set_device(SEXP xptr, std::string device);
-RcppExport SEXP _xclim_engine_set_device(SEXP xptrSEXP, SEXP deviceSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type xptr(xptrSEXP);
-    Rcpp::traits::input_parameter< std::string >::type device(deviceSEXP);
-    engine_set_device(xptr, device);
-    return R_NilValue;
-END_RCPP
-}
-// gdal_can_open
-bool gdal_can_open(const std::string& path);
-RcppExport SEXP _xclim_gdal_can_open(SEXP pathSEXP) {
+// era5_to_monthly_cpp
+List era5_to_monthly_cpp(NumericMatrix hourly_t2m, NumericMatrix hourly_tp, int n_days, bool to_celsius, int ncores);
+RcppExport SEXP _xclim_era5_to_monthly_cpp(SEXP hourly_t2mSEXP, SEXP hourly_tpSEXP, SEXP n_daysSEXP, SEXP to_celsiusSEXP, SEXP ncoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type path(pathSEXP);
-    rcpp_result_gen = Rcpp::wrap(gdal_can_open(path));
-    return rcpp_result_gen;
-END_RCPP
-}
-// gdal_info
-Rcpp::List gdal_info(const std::string& path);
-RcppExport SEXP _xclim_gdal_info(SEXP pathSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type path(pathSEXP);
-    rcpp_result_gen = Rcpp::wrap(gdal_info(path));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rasterize_mask_cpp
-SEXP rasterize_mask_cpp(const std::string& vector_path, const std::string& ref_raster_path, const std::string& output_mask_path);
-RcppExport SEXP _xclim_rasterize_mask_cpp(SEXP vector_pathSEXP, SEXP ref_raster_pathSEXP, SEXP output_mask_pathSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type vector_path(vector_pathSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type ref_raster_path(ref_raster_pathSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type output_mask_path(output_mask_pathSEXP);
-    rcpp_result_gen = Rcpp::wrap(rasterize_mask_cpp(vector_path, ref_raster_path, output_mask_path));
-    return rcpp_result_gen;
-END_RCPP
-}
-// apply_mask_cpp
-SEXP apply_mask_cpp(const std::string& input_path, const std::string& mask_path, const std::string& output_path);
-RcppExport SEXP _xclim_apply_mask_cpp(SEXP input_pathSEXP, SEXP mask_pathSEXP, SEXP output_pathSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type input_path(input_pathSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type mask_path(mask_pathSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type output_path(output_pathSEXP);
-    rcpp_result_gen = Rcpp::wrap(apply_mask_cpp(input_path, mask_path, output_path));
+    Rcpp::traits::input_parameter< NumericMatrix >::type hourly_t2m(hourly_t2mSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type hourly_tp(hourly_tpSEXP);
+    Rcpp::traits::input_parameter< int >::type n_days(n_daysSEXP);
+    Rcpp::traits::input_parameter< bool >::type to_celsius(to_celsiusSEXP);
+    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
+    rcpp_result_gen = Rcpp::wrap(era5_to_monthly_cpp(hourly_t2m, hourly_tp, n_days, to_celsius, ncores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -674,14 +546,6 @@ END_RCPP
 RcppExport SEXP _rcpp_module_boot_bioclim_mod();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_xclim_engine_create", (DL_FUNC) &_xclim_engine_create, 0},
-    {"_xclim_engine_open", (DL_FUNC) &_xclim_engine_open, 5},
-    {"_xclim_engine_set_output", (DL_FUNC) &_xclim_engine_set_output, 2},
-    {"_xclim_engine_set_mask", (DL_FUNC) &_xclim_engine_set_mask, 2},
-    {"_xclim_engine_set_threads", (DL_FUNC) &_xclim_engine_set_threads, 2},
-    {"_xclim_engine_set_tile_size", (DL_FUNC) &_xclim_engine_set_tile_size, 2},
-    {"_xclim_engine_set_variables", (DL_FUNC) &_xclim_engine_set_variables, 2},
-    {"_xclim_engine_compute", (DL_FUNC) &_xclim_engine_compute, 1},
     {"_xclim_bio01_cpp", (DL_FUNC) &_xclim_bio01_cpp, 1},
     {"_xclim_bio02_cpp", (DL_FUNC) &_xclim_bio02_cpp, 2},
     {"_xclim_bio03_cpp", (DL_FUNC) &_xclim_bio03_cpp, 2},
@@ -725,13 +589,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_xclim_bioclim_model_bio19", (DL_FUNC) &_xclim_bioclim_model_bio19, 1},
     {"_xclim_bioclim_model_compute", (DL_FUNC) &_xclim_bioclim_model_compute, 1},
     {"_xclim_bioclim_xt", (DL_FUNC) &_xclim_bioclim_xt, 5},
-    {"_xclim_cuda_device_count", (DL_FUNC) &_xclim_cuda_device_count, 0},
-    {"_xclim_cuda_device_info", (DL_FUNC) &_xclim_cuda_device_info, 0},
-    {"_xclim_engine_set_device", (DL_FUNC) &_xclim_engine_set_device, 2},
-    {"_xclim_gdal_can_open", (DL_FUNC) &_xclim_gdal_can_open, 1},
-    {"_xclim_gdal_info", (DL_FUNC) &_xclim_gdal_info, 1},
-    {"_xclim_rasterize_mask_cpp", (DL_FUNC) &_xclim_rasterize_mask_cpp, 3},
-    {"_xclim_apply_mask_cpp", (DL_FUNC) &_xclim_apply_mask_cpp, 3},
+    {"_xclim_era5_t2m_to_monthly_cpp", (DL_FUNC) &_xclim_era5_t2m_to_monthly_cpp, 4},
+    {"_xclim_era5_tp_to_monthly_cpp", (DL_FUNC) &_xclim_era5_tp_to_monthly_cpp, 2},
+    {"_xclim_era5_to_monthly_cpp", (DL_FUNC) &_xclim_era5_to_monthly_cpp, 5},
     {"_rcpp_module_boot_bioclim_mod", (DL_FUNC) &_rcpp_module_boot_bioclim_mod, 0},
     {NULL, NULL, 0}
 };

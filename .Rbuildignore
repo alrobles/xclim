@@ -8,3 +8,8 @@
 ^benchmarks$
 ^tools$
 ^cran-comments\.md$
+^\.git$
+^\.gitignore$
+^src/.*\.o$
+^src/.*\.so$
+^src/.*\.dll$
