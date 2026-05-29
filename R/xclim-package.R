@@ -3,18 +3,20 @@
 #' Computes the 19 standard bioclimatic variables (BIO01-BIO19) from monthly
 #' climate data following the WorldClim specification. This is an R
 #' implementation of the xbioclim C++ library, with a compiled C++ back-end
-#' exposed through Rcpp Modules.
+#' exposed through Rcpp.
 #'
-#' @section Error and warning propagation:
-#' xclim mirrors the `SpatMessages` pattern used by the terra package.
-#' C++ routines record errors and warnings into an internal message store
-#' rather than throwing directly.  R-side wrappers around C++ calls should
-#' invoke [check_messages()] after each call to convert any stored messages
-#' into native R conditions.  Users can also inspect the store
-#' programmatically:
-#' * [bioclim_errors()] / [bioclim_warnings()] – retrieve stored messages.
-#' * [has_error()] / [has_warning()] – test whether messages exist.
-#' * [clear_messages()] – reset the store.
+#' @section Main functions:
+#' \describe{
+#'   \item{\code{\link{bioclim}}}{Compute all 19 bioclimatic variables from
+#'     monthly vectors (single pixel).}
+#'   \item{\code{\link{bio01}} -- \code{\link{bio19}}}{Individual variable
+#'     functions.}
+#'   \item{\code{\link{bioclim_raster}}}{Block-based processing of
+#'     \code{terra::SpatRaster} objects.}
+#'   \item{\code{\link{era5_to_monthly}}}{ERA5-Land hourly to monthly
+#'     aggregation.}
+#'   \item{\code{\link{era5_bioclim}}}{End-to-end ERA5 to bioclim pipeline.}
+#' }
 #'
 #' @docType package
 #' @name xclim-package

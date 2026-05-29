@@ -157,12 +157,17 @@ bioclim_raster <- function(tas, tasmax, tasmin, pr,
   out <- terra::rast(tas[[1L]], nlyrs = 19L)
   names(out) <- paste0("bio", sprintf("%02d", 1:19))
 
-  # Determine blocks
-  bk <- if (is.null(n_blocks)) {
-    terra::blocks(out)
-  } else {
-    terra::blocks(out, n = n_blocks)
+  # Determine blocks (manual calculation for portability across terra versions)
+  nr <- terra::nrow(out)
+  if (is.null(n_blocks)) {
+    n_blocks <- max(1L, ceiling(nr / 100L))
   }
+  rows_per_block <- ceiling(nr / n_blocks)
+  bk <- list(
+    row = seq(1L, nr, by = rows_per_block),
+    nrows = pmin(rows_per_block, nr - seq(1L, nr, by = rows_per_block) + 1L),
+    n = min(n_blocks, nr)
+  )
 
   # State variables for cleanup tracking
   write_started <- FALSE

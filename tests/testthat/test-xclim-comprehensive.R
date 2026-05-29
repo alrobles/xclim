@@ -10,14 +10,10 @@
 #   Layer 5: ClimateBlock Rcpp module
 #   Layer 6: bioclim_xt() — zero-copy C++ vectorized path
 #   Layer 7: bioclim_raster() — terra block-loop path
-#   Layer 8: BioclimEngine — GDAL tiled XPtr engine
-#   Layer 9: bioclim_engine() — R user-facing API
-#   Layer 10: Masking support (GDAL polygon masking)
-#   Layer 11: Cross-layer numerical consistency
-#   Layer 12: Edge cases, NA handling, stress tests
+#   Layer 8: Cross-layer numerical consistency
+#   Layer 9: Edge cases, NA handling, stress tests
 #
-# All GDAL/terra-dependent tests skip gracefully on platforms without them.
-# Designed for Issue #28 (backward compatibility) validation.
+# terra-dependent tests skip gracefully on platforms without them.
 # ============================================================================
 
 library(testthat)
@@ -64,7 +60,7 @@ to_mat <- function(x) matrix(as.double(x), nrow = 1L, ncol = 12L)
 # ── Skip helpers ─────────────────────────────────────────────────────────────
 
 skip_without_terra <- function() testthat::skip_if_not_installed("terra")
-skip_without_gdal  <- function() if (!has_gdal()) testthat::skip("No GDAL")
+
 skip_without_sf    <- function() testthat::skip_if_not_installed("sf")
 
 # ============================================================================
@@ -403,253 +399,6 @@ test_that("L7: bioclim_raster rejects non-SpatRaster", {
 })
 
 # ============================================================================
-# LAYER 8: BioclimEngine — GDAL tiled XPtr engine
-# ============================================================================
-test_that("L8: engine_create returns externalptr", {
-  ptr <- engine_create()
-  expect_true(is(ptr, "externalptr"))
-})
-test_that("L8: all engine setter methods work without error", {
-  ptr <- engine_create()
-  expect_no_error(engine_set_output(ptr, tempfile(fileext = ".tif")))
-  expect_no_error(engine_set_mask(ptr, ""))
-  expect_no_error(engine_set_threads(ptr, 4L))
-  expect_no_error(engine_set_tile_size(ptr, 64L))
-})
-test_that("L8: engine_compute stops clearly without GDAL", {
-  if (has_gdal()) skip("GDAL present")
-  ptr <- engine_create()
-  expect_error(engine_compute(ptr), "GDAL")
-})
-test_that("L8: engine round-trip with tiny rasters", {
-  skip_without_gdal()
-  skip_without_terra()
-
-  tmpdir <- tempfile("engine_rt_")
-  dir.create(tmpdir)
-  on.exit(unlink(tmpdir, recursive = TRUE), add = TRUE)
-
-  make_tif <- function(vals, path) {
-    r <- terra::rast(nrows = 3, ncols = 3, nlyrs = 12,
-                     xmin = 0, xmax = 1, ymin = 0, ymax = 1, crs = "EPSG:4326")
-    for (m in 1:12) terra::values(r[[m]]) <- vals[m]
-    terra::writeRaster(r, path, overwrite = TRUE)
-    path
-  }
-
-  tas_f    <- make_tif(tas_real,    file.path(tmpdir, "tas.tif"))
-  tasmax_f <- make_tif(tasmax_real, file.path(tmpdir, "tasmax.tif"))
-  tasmin_f <- make_tif(tasmin_real, file.path(tmpdir, "tasmin.tif"))
-  pr_f     <- make_tif(pr_real,     file.path(tmpdir, "pr.tif"))
-  out_d    <- file.path(tmpdir, "bio_out")
-  dir.create(out_d, recursive = TRUE)
-
-  ptr <- engine_create()
-  engine_open(ptr, tas_f, tasmax_f, tasmin_f, pr_f)
-  engine_set_output(ptr, out_d)
-  engine_set_threads(ptr, 1L)
-  engine_set_tile_size(ptr, 2L)  # force edge-tile handling
-  result_path <- engine_compute(ptr)
-
-  expect_true(dir.exists(result_path))
-  bio_files <- file.path(result_path, sprintf("bio%02d.tif", 1:19))
-  out_r <- terra::rast(bio_files)
-  expect_equal(terra::nlyr(out_r), 19L)
-
-  vals <- terra::values(out_r)
-  # BIO01 = mean(tas_real)
-  expect_equal(unname(vals[1, 1]), mean(tas_real), tolerance = tol)
-  # BIO12 = sum(pr_real)
-  expect_equal(unname(vals[1, 12]), sum(pr_real), tolerance = tol)
-  # BIO05 = max(tasmax_real)
-  expect_equal(unname(vals[1, 5]), max(tasmax_real), tolerance = tol)
-})
-
-# ============================================================================
-# LAYER 9: bioclim_engine() — R user-facing API
-# ============================================================================
-test_that("L9: bioclim_engine() stops without GDAL", {
-  if (has_gdal()) skip("GDAL present")
-  skip_without_terra()
-  tmpdir <- tempfile("be_nogdal_")
-  dir.create(tmpdir)
-  on.exit(unlink(tmpdir, recursive = TRUE), add = TRUE)
-  # Create dummy files so validation doesn't fail first
-  f <- file.path(tmpdir, "dummy.tif")
-  r <- terra::rast(nrows = 3, ncols = 3, nlyrs = 12)
-  terra::values(r) <- 1
-  terra::writeRaster(r, f, overwrite = TRUE)
-  expect_error(bioclim_engine(f, f, f, f), "GDAL")
-})
-test_that("L9: bioclim_engine() input validation", {
-  skip_without_gdal()
-  # Bad output
-  expect_error(bioclim_engine("a", "b", "c", "d", output = 42), "character string")
-  # Bad threads
-  expect_error(bioclim_engine("a", "b", "c", "d", threads = -1), "integer >= 1")
-  # Bad tile_size
-  expect_error(bioclim_engine("a", "b", "c", "d", tile_size = 0), "integer >= 1")
-})
-test_that("L9: bioclim_engine() full round-trip with multi-band files", {
-  skip_without_gdal()
-  skip_without_terra()
-
-  tmpdir <- tempfile("be_round_")
-  dir.create(tmpdir)
-  on.exit(unlink(tmpdir, recursive = TRUE), add = TRUE)
-
-  make_tif <- function(vals, path) {
-    r <- terra::rast(nrows = 5, ncols = 5, nlyrs = 12,
-                     xmin = 0, xmax = 1, ymin = 0, ymax = 1, crs = "EPSG:4326")
-    for (m in 1:12) terra::values(r[[m]]) <- vals[m]
-    terra::writeRaster(r, path, overwrite = TRUE)
-    path
-  }
-
-  tas_f    <- make_tif(tas_real,    file.path(tmpdir, "tas.tif"))
-  tasmax_f <- make_tif(tasmax_real, file.path(tmpdir, "tasmax.tif"))
-  tasmin_f <- make_tif(tasmin_real, file.path(tmpdir, "tasmin.tif"))
-  pr_f     <- make_tif(pr_real,     file.path(tmpdir, "pr.tif"))
-
-  result <- bioclim_engine(tas_f, tasmax_f, tasmin_f, pr_f,
-                           threads = 2L, tile_size = 3L)
-
-  if (inherits(result, "SpatRaster")) {
-    expect_equal(terra::nlyr(result), 19L)
-    vals <- terra::values(result)
-    # All 25 pixels should have the same values (uniform input)
-    expect_equal(unname(vals[1, 1]), mean(tas_real), tolerance = tol)
-    expect_equal(unname(vals[1, 12]), sum(pr_real), tolerance = tol)
-    # Check consistency: all cells identical
-    for (i in 2:25) {
-      expect_equal(vals[i, ], vals[1, ], tolerance = 1e-10,
-                   label = paste("cell", i))
-    }
-  } else {
-    # Without terra, we get a character vector of file paths
-    expect_true(all(file.exists(result)))
-  }
-})
-test_that("L9: bioclim_engine() accepts SpatRaster input", {
-  skip_without_gdal()
-  skip_without_terra()
-
-  tmpdir <- tempfile("be_spatr_")
-  dir.create(tmpdir)
-  on.exit(unlink(tmpdir, recursive = TRUE), add = TRUE)
-
-  make_rast <- function(vals) {
-    r <- terra::rast(nrows = 3, ncols = 3, nlyrs = 12,
-                     xmin = 0, xmax = 1, ymin = 0, ymax = 1, crs = "EPSG:4326")
-    for (m in 1:12) terra::values(r[[m]]) <- vals[m]
-    f <- file.path(tmpdir, paste0(c(sample(letters, 8, replace = TRUE), ".tif"), collapse = ""))
-    terra::writeRaster(r, f, overwrite = TRUE)
-    terra::rast(f)
-  }
-
-  result <- bioclim_engine(make_rast(tas_real), make_rast(tasmax_real),
-                           make_rast(tasmin_real), make_rast(pr_real))
-  if (inherits(result, "SpatRaster")) {
-    expect_equal(terra::nlyr(result), 19L)
-  }
-})
-test_that("L9: bioclim_engine() overwrite behavior", {
-  skip_without_gdal()
-  skip_without_terra()
-
-  tmpdir <- tempfile("be_overwrite_")
-  dir.create(tmpdir)
-  on.exit(unlink(tmpdir, recursive = TRUE), add = TRUE)
-
-  make_tif <- function(vals, path) {
-    r <- terra::rast(nrows = 3, ncols = 3, nlyrs = 12,
-                     xmin = 0, xmax = 1, ymin = 0, ymax = 1, crs = "EPSG:4326")
-    for (m in 1:12) terra::values(r[[m]]) <- vals[m]
-    terra::writeRaster(r, path, overwrite = TRUE)
-    path
-  }
-  tas_f    <- make_tif(tas_real,    file.path(tmpdir, "tas.tif"))
-  tasmax_f <- make_tif(tasmax_real, file.path(tmpdir, "tasmax.tif"))
-  tasmin_f <- make_tif(tasmin_real,    file.path(tmpdir, "tasmin.tif"))
-  pr_f     <- make_tif(pr_real,     file.path(tmpdir, "pr.tif"))
-  out_d    <- file.path(tmpdir, "out_dir")
-
-  bioclim_engine(tas_f, tasmax_f, tasmin_f, pr_f, output = out_d)
-  expect_true(dir.exists(out_d))
-  # Second call without overwrite should fail (files already exist)
-
-  expect_error(bioclim_engine(tas_f, tasmax_f, tasmin_f, pr_f, output = out_d),
-               "already exist")
-  # With overwrite = TRUE should succeed
-  expect_no_error(
-    bioclim_engine(tas_f, tasmax_f, tasmin_f, pr_f, output = out_d, overwrite = TRUE)
-  )
-})
-
-# ============================================================================
-# LAYER 10: Masking support
-# ============================================================================
-test_that("L10: create_mask with character path", {
-  skip_without_gdal()
-
-  ref <- system.file("extdata", "tiny.tif", package = "xclim")
-  if (!nzchar(ref)) skip("tiny.tif not found in inst/extdata")
-
-  poly <- tempfile(fileext = ".geojson")
-  mask <- tempfile(fileext = ".tif")
-  on.exit(unlink(c(poly, mask)), add = TRUE)
-
-  # Write covering polygon
-  geojson <- paste0(
-    '{"type":"FeatureCollection","features":[{"type":"Feature",
-    "geometry":{"type":"Polygon",
-    "coordinates":[[[0,0],[3,0],[3,-3],[0,-3],[0,0]]]},
-    "properties":{}}]}'
-  )
-  writeLines(geojson, poly)
-  rasterize_mask_cpp(poly, ref, mask)
-  expect_true(file.exists(mask))
-})
-test_that("L10: bioclim_engine with mask parameter", {
-  skip_without_gdal()
-  skip_without_terra()
-
-  tmpdir <- tempfile("mask_test_")
-  dir.create(tmpdir)
-  on.exit(unlink(tmpdir, recursive = TRUE), add = TRUE)
-
-  make_tif <- function(vals, path) {
-    r <- terra::rast(nrows = 4, ncols = 4, nlyrs = 12,
-                     xmin = 0, xmax = 1, ymin = 0, ymax = 1, crs = "EPSG:4326")
-    for (m in 1:12) terra::values(r[[m]]) <- vals[m]
-    terra::writeRaster(r, path, overwrite = TRUE)
-    path
-  }
-  # Create mask: top half = 1, bottom half = 0
-  mask_r <- terra::rast(nrows = 4, ncols = 4, nlyrs = 1,
-                        xmin = 0, xmax = 1, ymin = 0, ymax = 1, crs = "EPSG:4326")
-  mask_vals <- c(rep(1, 8), rep(0, 8))  # 4x4, top 2 rows = 1, bottom 2 rows = 0
-  terra::values(mask_r) <- mask_vals
-  mask_f <- file.path(tmpdir, "mask.tif")
-  terra::writeRaster(mask_r, mask_f, overwrite = TRUE)
-
-  tas_f    <- make_tif(tas_real,    file.path(tmpdir, "tas.tif"))
-  tasmax_f <- make_tif(tasmax_real, file.path(tmpdir, "tasmax.tif"))
-  tasmin_f <- make_tif(tasmin_real, file.path(tmpdir, "tasmin.tif"))
-  pr_f     <- make_tif(pr_real,     file.path(tmpdir, "pr.tif"))
-
-  result <- bioclim_engine(tas_f, tasmax_f, tasmin_f, pr_f,
-                           mask = mask_f, tile_size = 2L)
-  if (inherits(result, "SpatRaster")) {
-    vals <- terra::values(result)
-    # Top half (rows 1-8) should have real values
-    expect_false(any(is.na(vals[1, ])))
-    # Bottom half (rows 9-16) should be NA/NaN (masked)
-    expect_true(all(is.na(vals[9, ]) | is.nan(vals[9, ])))
-  }
-})
-
-# ============================================================================
 # LAYER 11: Cross-layer numerical consistency
 # ============================================================================
 test_that("L11: R bioclim() == bioclim_xt() == ClimateBlock == BioclimData", {
@@ -677,61 +426,6 @@ test_that("L11: R bioclim() == bioclim_xt() == ClimateBlock == BioclimData", {
     }
   }
 })
-test_that("L11: bioclim_raster matches bioclim_engine for same input", {
-  skip_without_gdal()
-  skip_without_terra()
-
-  tmpdir <- tempfile("cross_")
-  dir.create(tmpdir)
-  on.exit(unlink(tmpdir, recursive = TRUE), add = TRUE)
-
-  n_cells <- 4 * 3
-  make_rast <- function(vals) {
-    r <- terra::rast(nrows = 4, ncols = 3, nlyr = 12,
-                     xmin = 0, xmax = 3, ymin = 0, ymax = 4, crs = "EPSG:4326")
-    terra::values(r) <- matrix(rep(vals, n_cells), nrow = n_cells, ncol = 12, byrow = TRUE)
-    r
-  }
-
-  make_tif <- function(vals, path) {
-    r <- make_rast(vals)
-    terra::writeRaster(r, path, overwrite = TRUE)
-    path
-  }
-
-  r_t  <- make_rast(tas_real);  r_tx <- make_rast(tasmax_real)
-  r_tn <- make_rast(tasmin_real); r_p <- make_rast(pr_real)
-
-  raster_result <- bioclim_raster(r_t, r_tx, r_tn, r_p)
-  raster_vals   <- terra::values(raster_result)
-
-  tas_f    <- make_tif(tas_real,    file.path(tmpdir, "tas.tif"))
-  tasmax_f <- make_tif(tasmax_real, file.path(tmpdir, "tasmax.tif"))
-  tasmin_f <- make_tif(tasmin_real, file.path(tmpdir, "tasmin.tif"))
-  pr_f     <- make_tif(pr_real,     file.path(tmpdir, "pr.tif"))
-
-  engine_result <- bioclim_engine(tas_f, tasmax_f, tasmin_f, pr_f, tile_size = 2L)
-  engine_vals   <- terra::values(engine_result)
-
-  # Both should produce 19 columns, same number of rows
-  expect_equal(ncol(raster_vals), 19L)
-  expect_equal(ncol(engine_vals), 19L)
-  expect_equal(nrow(raster_vals), nrow(engine_vals))
-
-  # Values should match cell-by-cell
-  for (i in 1:nrow(raster_vals)) {
-    for (j in 1:19) {
-      if (is.na(raster_vals[i, j]) || is.nan(raster_vals[i, j])) {
-        expect_true(is.na(engine_vals[i, j]) || is.nan(engine_vals[i, j]),
-                    label = paste("cell", i, "var", j, "NA consistency"))
-      } else {
-        expect_equal(unname(engine_vals[i, j]), unname(raster_vals[i, j]), tolerance = 1e-6,
-                     label = paste("cell", i, "var", j))
-      }
-    }
-  }
-})
-
 # ============================================================================
 # LAYER 12: Edge cases, NA handling, stress tests
 # ============================================================================
@@ -790,9 +484,6 @@ test_that("L12: bioclim_xt handles large batch (1000 pixels)", {
   # Spot check: all rows should be identical
   expect_equal(result[1, ], result[500, ], tolerance = 1e-12)
   expect_equal(result[1, ], result[1000, ], tolerance = 1e-12)
-})
-test_that("L12: has_gdal returns logical", {
-  expect_type(has_gdal(), "logical")
 })
 test_that("L12: message system works end-to-end", {
   clear_messages()

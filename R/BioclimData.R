@@ -29,18 +29,14 @@ setClass(
   validity = function(object) {
     msgs <- character(0)
 
-    check_slot <- function(x, nm) {
+    for (nm in c("tas", "tasmax", "tasmin", "pr")) {
+      x <- slot(object, nm)
       if (!is.numeric(x))
-        msgs <<- c(msgs, sprintf("'%s' must be numeric", nm))
+        msgs <- c(msgs, sprintf("'%s' must be numeric", nm))
       if (ncol(x) != 12L)
-        msgs <<- c(msgs, sprintf("'%s' must have 12 columns (one per month), got %d",
-                                 nm, ncol(x)))
+        msgs <- c(msgs, sprintf("'%s' must have 12 columns (one per month), got %d",
+                                nm, ncol(x)))
     }
-
-    check_slot(object@tas,    "tas")
-    check_slot(object@tasmax, "tasmax")
-    check_slot(object@tasmin, "tasmin")
-    check_slot(object@pr,     "pr")
 
     n_rows <- nrow(object@tas)
     for (nm in c("tasmax", "tasmin", "pr")) {
